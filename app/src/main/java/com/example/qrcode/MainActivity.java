@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.journeyapps.barcodescanner.CaptureActivity;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     private Button buttonScan;
@@ -73,16 +74,41 @@ public class MainActivity extends AppCompatActivity {
             // Extract the scanned QR code content (URL or text)
             String scannedData = data.getStringExtra("SCAN_RESULT");
 
-            // Display the scanned data
-            Toast.makeText(this, "Scanned: " + scannedData, Toast.LENGTH_LONG).show();
+            // If scanned data is not null, try to parse the JSON
+            if (scannedData != null) {
+                try {
+                    // Parse the scanned data as JSON
+                    JSONObject jsonObject = new JSONObject(scannedData);
 
-            // If the scanned data is a URL, open it in the browser
-            if (scannedData != null && (scannedData.startsWith("http://") || scannedData.startsWith("https://"))) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(scannedData));
-                startActivity(browserIntent);
+                    // Extract the title and website from the JSON object
+                    String title = jsonObject.getString("title");
+                    String website = jsonObject.getString("website");
+
+                    // Display the title and website in the appropriate fields
+                    etName.setText(title);
+                    etAddress.setText(website);
+
+                    // Set an OnClickListener for the website field to open the browser
+                    etAddress.setOnClickListener(v -> openBrowser(website));
+
+                } catch (Exception e) {
+                    // Handle any errors in parsing the JSON data
+                    Toast.makeText(this, "Failed to parse QR code data", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Scan failed or canceled", Toast.LENGTH_SHORT).show();
             }
-        } else {
-            Toast.makeText(this, "Scan failed or canceled", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void openBrowser (String website)
+    {
+        // If the scanned data is a URL, open it in the browser
+        if (website != null && (website.startsWith("http://") || website.startsWith("https://"))) {
+           Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(website));
+            startActivity(browserIntent);
+        }else {
+            Toast.makeText(this, "The scanned data is not a valid URL", Toast.LENGTH_SHORT).show();
         }
     }
 
